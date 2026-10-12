@@ -1,0 +1,62 @@
+name: Relatar um problema
+description: Algo não funciona como deveria
+labels: ["problema"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por relatar. **Falhas de segurança não vão aqui**: escreva para
+        contato@klippelbit.app.br, conforme a política de segurança.
+
+  - type: textarea
+    id: descricao
+    attributes:
+      label: O que aconteceu
+      description: Descreva o problema e o que você esperava que acontecesse.
+    validations:
+      required: true
+
+  - type: textarea
+    id: passos
+    attributes:
+      label: Como reproduzir
+      placeholder: |
+        1. Abri o CriptSage em...
+        2. Escrevi...
+        3. Cliquei em...
+        4. Aconteceu...
+    validations:
+      required: true
+
+  - type: input
+    id: navegador
+    attributes:
+      label: Navegador e versão
+      placeholder: Firefox 142, Chrome 140, Safari 18...
+    validations:
+      required: true
+
+  - type: input
+    id: sistema
+    attributes:
+      label: Sistema operacional
+      placeholder: Linux Mint 22, Windows 11, Android 15...
+    validations:
+      required: true
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Mensagens do console
+      description: Se houver erro no console do navegador (F12), cole aqui.
+      render: text
+
+  - type: checkboxes
+    id: confirmacoes
+    attributes:
+      label: Antes de enviar
+      options:
+        - label: Não estou relatando uma falha de segurança por aqui.
+          required: true
+        - label: Não incluí nenhuma palavra-passe ou mensagem confidencial neste relato.
+          required: true

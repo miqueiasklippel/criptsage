@@ -1,0 +1,25 @@
+name: Sugerir uma melhoria
+description: Uma ideia para o CriptSage
+labels: ["sugestão"]
+body:
+  - type: textarea
+    id: ideia
+    attributes:
+      label: A ideia
+      description: O que você gostaria que o CriptSage fizesse.
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivo
+    attributes:
+      label: Qual problema isso resolve
+      description: Descreva a situação em que a melhoria faria diferença.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: Alternativas consideradas
+      description: Outras maneiras de resolver o mesmo problema, se você pensou em alguma.

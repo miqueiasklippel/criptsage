@@ -1,0 +1,56 @@
+name: Publicação
+
+# Publica o CriptSage no GitHub Pages a cada alteração no ramo principal.
+# Antes do primeiro uso, vá em Settings → Pages e escolha "GitHub Actions"
+# como origem.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Uma publicação de cada vez; novas alterações não cancelam a que está em curso.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  testes:
+    name: Testes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/criptsage.test.mjs
+
+  publicar:
+    name: Publicar no GitHub Pages
+    needs: testes
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.publicacao.outputs.page_url }}
+
+    steps:
+      - name: Obter o código
+        uses: actions/checkout@v4
+
+      - name: Preparar o Pages
+        uses: actions/configure-pages@v5
+
+      - name: Empacotar os arquivos
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Publicar
+        id: publicacao
+        uses: actions/deploy-pages@v4
