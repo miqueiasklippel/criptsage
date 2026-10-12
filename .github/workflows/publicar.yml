@@ -22,18 +22,18 @@ concurrency:
 jobs:
   testes:
     name: Testes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version: '24'
       - run: node tests/criptsage.test.mjs
 
   publicar:
     name: Publicar no GitHub Pages
     needs: testes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     environment:
       name: github-pages
@@ -41,16 +41,16 @@ jobs:
 
     steps:
       - name: Obter o código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Preparar o Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Empacotar os arquivos
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: '.'
 
       - name: Publicar
         id: publicacao
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
