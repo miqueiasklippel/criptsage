@@ -10,7 +10,7 @@
 [![Testes](https://github.com/miqueiasklippel/criptsage/actions/workflows/testes.yml/badge.svg)](https://github.com/miqueiasklippel/criptsage/actions/workflows/testes.yml)
 [![Publicação](https://github.com/miqueiasklippel/criptsage/actions/workflows/publicar.yml/badge.svg)](https://github.com/miqueiasklippel/criptsage/actions/workflows/publicar.yml)
 
-[**Abrir o CriptSage**](https://miqueiasklippel.github.io/criptsage/) &nbsp;·&nbsp;
+[**Abrir o CriptSage**](https://criptsage.klippelbit.app.br/) &nbsp;·&nbsp;
 [Como funciona](#como-funciona) &nbsp;·&nbsp;
 [Formato CSG1](docs/FORMATO.md) &nbsp;·&nbsp;
 [Segurança](SECURITY.md)

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://miqueiasklippel.github.io/criptsage/sitemap.xml
+Sitemap: https://criptsage.klippelbit.app.br/sitemap.xml
