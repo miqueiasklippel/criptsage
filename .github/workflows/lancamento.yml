@@ -64,6 +64,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ETIQUETA: ${{ steps.pacote.outputs.etiqueta }}
           RESUMOS: ${{ steps.pacote.outputs.resumos }}
+          COMMIT: ${{ github.sha }}
         run: |
           set -euo pipefail
           cat > corpo.md <<CORPO
@@ -96,7 +97,24 @@ jobs:
           \`\`\`
           CORPO
 
-          gh release create "$ETIQUETA" \
-            --title "CriptSage $ETIQUETA" \
-            --notes-file corpo.md \
-            index.html "criptsage-${ETIQUETA}.zip" SHA256SUMS.txt
+          # O passo é idempotente de propósito: serve tanto para a etiqueta
+          # enviada pelo terminal quanto para a execução manual pela aba
+          # Actions, que cria a etiqueta por conta própria, e pode ser repetido
+          # sem erro se a versão já existir.
+          if gh release view "$ETIQUETA" >/dev/null 2>&1; then
+            echo "A versão $ETIQUETA já existe: atualizando o texto e os arquivos."
+            gh release edit "$ETIQUETA" \
+              --title "CriptSage $ETIQUETA" \
+              --notes-file corpo.md
+            gh release upload "$ETIQUETA" \
+              index.html "criptsage-${ETIQUETA}.zip" SHA256SUMS.txt --clobber
+          else
+            echo "Criando a versão $ETIQUETA sobre o commit $COMMIT."
+            gh release create "$ETIQUETA" \
+              --target "$COMMIT" \
+              --title "CriptSage $ETIQUETA" \
+              --notes-file corpo.md \
+              index.html "criptsage-${ETIQUETA}.zip" SHA256SUMS.txt
+          fi
+
+          echo "Pronto: $(gh release view "$ETIQUETA" --json url --jq .url)"
