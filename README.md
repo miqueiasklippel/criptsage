@@ -93,6 +93,10 @@ bem à maioria dos casos.
 | **AES-256-CBC** | Blocos encadeados, com preenchimento PKCS#7 | HMAC-SHA-256 com chave própria, no esquema cifrar e depois autenticar |
 | **AES-256-CTR** | Contador | HMAC-SHA-256 com chave própria |
 
+Nos dois modos com HMAC, a chave de cifragem e a de autenticação saem de uma chave mestra
+de 256 bits expandida por HKDF-SHA-256, com rótulos distintos. Mensagens geradas antes da
+versão 1.1.0 usavam outra derivação e continuam sendo abertas normalmente.
+
 | Derivação | Repetições no custo padrão |
 |---|---|
 | **PBKDF2-SHA-256** (padrão) | 600.000 |
@@ -100,7 +104,9 @@ bem à maioria dos casos.
 
 Esses números seguem as recomendações da OWASP em vigor. O custo pode ser multiplicado
 por dois ou por quatro, deixando cada tentativa de adivinhação proporcionalmente mais
-cara, à custa de um pouco mais de espera na hora de abrir a mensagem.
+cara, à custa de um pouco mais de espera na hora de abrir a mensagem. Na abertura, só são
+aceitos valores entre 100.000 e 10.000.000 repetições, conferidos antes de qualquer
+operação criptográfica.
 
 Nos três algoritmos, a autenticação cobre também o cabeçalho (versão, algoritmo,
 derivação, repetições, sal e vetor de inicialização), de modo que nenhum parâmetro pode
@@ -164,12 +170,22 @@ Node.js 18 ou superior.
 
 ```bash
 node tests/criptsage.test.mjs
+node tools/csp.mjs --verificar
 ```
 
-São verificadas as dezoito combinações de algoritmo, derivação e tipo de mensagem, com
-acentos, emoji, texto de um único caractere e texto longo. Cada combinação confirma que o
-texto volta igual, que uma palavra-passe errada é recusada, que um byte alterado é
-detectado e que a normalização Unicode faz as formas NFC e NFD produzirem a mesma chave.
+São 61 casos. As dezoito combinações de algoritmo, derivação e tipo de mensagem cobrem
+acentos, emoji, texto de um único caractere e texto longo, e cada uma confirma que o texto
+volta igual, que uma palavra-passe errada é recusada, que um byte alterado é detectado e
+que a normalização Unicode faz as formas NFC e NFD produzirem a mesma chave.
+
+Os demais casos conferem a abertura dos [vetores de teste oficiais](docs/FORMATO.md), a
+compatibilidade com blocos gerados pela versão 1.0.0, a independência das subchaves
+derivadas por HKDF e a recusa de cabeçalhos forjados com o campo de repetições fora da
+faixa aceita.
+
+O segundo comando recalcula os resumos SHA-256 do estilo e do script embutidos e confere
+que a política de segurança declarada na página corresponde ao conteúdo atual. A
+integração contínua executa os dois, e a publicação não acontece se algum falhar.
 
 ## Estrutura do projeto
 
@@ -179,6 +195,8 @@ criptsage/
 ├── sw.js                       service worker, responsável pelo uso offline
 ├── manifest.webmanifest        permite instalar como aplicativo
 ├── assets/                     ícones e imagem para compartilhamento
+├── tools/
+│   └── csp.mjs                 calcula e confere a política de segurança da página
 ├── docs/
 │   └── FORMATO.md              especificação do formato CSG1
 ├── tests/
@@ -207,6 +225,11 @@ para ser reimplementado em uma tarde, e está [documentado em detalhe](docs/FORM
 **Autenticação sempre.** Nenhum dos modos oferecidos permite cifrar sem autenticar. Nos
 modos CBC e CTR, o HMAC é conferido antes de qualquer tentativa de decifrar.
 
+**Política de segurança estrita, sem `unsafe-inline`.** Por ser um arquivo único, a página
+declara o resumo SHA-256 do seu próprio estilo e do seu próprio script para autorizá-los,
+e proíbe toda conexão de saída com `connect-src 'none'`. Mesmo que código estranho fosse
+injetado, não teria como enviar nada para fora.
+
 ## Limitações conhecidas
 
 - **Não existe recuperação.** Sem a palavra-passe, a mensagem não pode ser aberta por
@@ -223,6 +246,12 @@ modos CBC e CTR, o HMAC é conferido antes de qualquer tentativa de decifrar.
 - **As fontes vêm do Google Fonts.** É a única requisição externa da página, feita apenas
   na primeira visita e depois guardada pelo service worker. Para eliminar até ela, troque
   a declaração de fontes no `index.html` por uma pilha de fontes do sistema.
+- **A entrega do código exige confiança.** O processamento é local, mas o arquivo chega
+  pela rede na primeira visita. Para dispensar essa confiança, baixe o `index.html` de
+  [Releases](https://github.com/miqueiasklippel/criptsage/releases), confira o resumo
+  SHA-256 publicado junto e abra o arquivo direto do disco.
+- **O corretor ortográfico está desligado** no campo da mensagem, de propósito, para não
+  enviar texto em claro a serviços em nuvem. Em troca, erros de digitação não são marcados.
 
 ## Contribuindo
 

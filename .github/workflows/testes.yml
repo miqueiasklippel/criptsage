@@ -35,5 +35,8 @@ jobs:
       - name: Conferir a sintaxe do service worker
         run: node --check sw.js
 
+      - name: Conferir a Content-Security-Policy
+        run: node tools/csp.mjs --verificar
+
       - name: Validar o manifesto
         run: node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest','utf8')); console.log('manifesto válido')"

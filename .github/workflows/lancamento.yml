@@ -1,0 +1,101 @@
+name: Lançamento
+
+# Publica uma versão no GitHub Releases quando uma etiqueta "v" é enviada:
+#
+#   git tag -a v1.1.0 -m "CriptSage 1.1.0"
+#   git push origin v1.1.0
+#
+# A versão traz o index.html isolado, para uso offline, e o resumo SHA-256 de
+# cada arquivo, para que quem não quiser confiar na entrega pela web possa
+# conferir o arquivo antes de abri-lo.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      etiqueta:
+        description: 'Etiqueta a publicar, por exemplo v1.1.0'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  testes:
+    name: Testes
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - run: node tests/criptsage.test.mjs
+      - run: node tools/csp.mjs --verificar
+
+  lancar:
+    name: Publicar a versão
+    needs: testes
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Obter o código
+        uses: actions/checkout@v7
+
+      - name: Montar o pacote e os resumos
+        id: pacote
+        run: |
+          set -euo pipefail
+          etiqueta="${{ github.event.inputs.etiqueta || github.ref_name }}"
+          mkdir -p lancamento
+          cp index.html sw.js manifest.webmanifest LICENSE lancamento/
+          cp -r assets lancamento/assets
+          ( cd lancamento && zip -rq "../criptsage-${etiqueta}.zip" . )
+          sha256sum "index.html" "criptsage-${etiqueta}.zip" > SHA256SUMS.txt
+          echo "etiqueta=${etiqueta}" >> "$GITHUB_OUTPUT"
+          {
+            echo 'resumos<<FIM'
+            cat SHA256SUMS.txt
+            echo FIM
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Criar a versão
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ETIQUETA: ${{ steps.pacote.outputs.etiqueta }}
+          RESUMOS: ${{ steps.pacote.outputs.resumos }}
+        run: |
+          set -euo pipefail
+          cat > corpo.md <<CORPO
+          ## CriptSage $ETIQUETA
+
+          O histórico completo das mudanças está no [CHANGELOG](CHANGELOG.md).
+
+          ### Uso offline verificável
+
+          O \`index.html\` abaixo funciona sozinho, aberto direto do disco, sem
+          servidor e sem conexão. Confira o resumo antes de abri-lo:
+
+          \`\`\`
+          sha256sum index.html
+          \`\`\`
+
+          O valor precisa coincidir com o publicado aqui. Assim não há entrega
+          pela web em que confiar.
+
+          Duas observações sobre o arquivo isolado: os ícones ficam de fora, o
+          que é apenas cosmético, e as fontes caem para as do próprio sistema,
+          já que não há acesso ao Google Fonts. O pacote \`.zip\` traz os ícones
+          e o service worker, para quem quiser hospedar a própria cópia.
+
+          ### Resumos SHA-256
+
+          \`\`\`
+          $RESUMOS
+          \`\`\`
+          CORPO
+
+          gh release create "$ETIQUETA" \
+            --title "CriptSage $ETIQUETA" \
+            --notes-file corpo.md \
+            index.html "criptsage-${ETIQUETA}.zip" SHA256SUMS.txt

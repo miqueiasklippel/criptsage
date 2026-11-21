@@ -9,7 +9,7 @@
  * página aberta recebe o aviso de atualização.
  */
 
-const VERSAO = 'criptsage-v1.0.0';
+const VERSAO = 'criptsage-v1.1.0';
 
 /* Arquivos próprios, sempre guardados na instalação. */
 const ESSENCIAIS = [

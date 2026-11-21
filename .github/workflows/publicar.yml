@@ -29,6 +29,7 @@ jobs:
         with:
           node-version: '24'
       - run: node tests/criptsage.test.mjs
+      - run: node tools/csp.mjs --verificar
 
   publicar:
     name: Publicar no GitHub Pages

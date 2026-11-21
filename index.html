@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#fdf5e6">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-8XG01PBanE8ZeM1SlhW5FBL8dMVPVjNBXvK+LbmBL7Y='; style-src 'sha256-s+NUBnOujiRO2BIug31QuX23RM4lEih0r6Gk5k0SwR0=' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; manifest-src 'self'; worker-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'">
 <meta name="color-scheme" content="light">
 <title>CriptSage — criptografia de textos</title>
 <meta name="description" content="O CriptSage cifra textos no próprio navegador com AES-256 e PBKDF2. Nada é enviado para a internet, e só quem souber a palavra-passe consegue ler.">
@@ -83,6 +84,7 @@ a:hover { color: var(--tinta); }
 
 .interior { width: 100%; max-width: var(--coluna); margin: 0 auto; padding: 0 24px; }
 .oculto-visual { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.fora-da-tela { position: absolute; }
 
 h1, h2, h3 { font-family: var(--titulo); font-weight: 600; letter-spacing: -.022em; margin: 0; text-wrap: balance; }
 h1 { font-size: clamp(2.3rem, 6vw, 3.6rem); line-height: 1.06; letter-spacing: -.032em; }
@@ -376,7 +378,7 @@ td code, p code, li code { font-family: var(--mono); font-size: .85em; backgroun
 <body>
 
 <!-- arte reutilizável: lacre -->
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<svg class="fora-da-tela" width="0" height="0" aria-hidden="true">
   <defs>
     <g id="arte-lacre">
       <polygon id="borda-lacre" fill="#eead2d" stroke="#eead2d" stroke-width="3" stroke-linejoin="round"></polygon>
@@ -453,7 +455,7 @@ td code, p code, li code { font-family: var(--mono); font-size: .85em; backgroun
           <div class="painel" id="painel-cifrar" role="tabpanel" aria-labelledby="aba-cifrar">
             <div class="campo">
               <label for="texto-claro">Mensagem <small id="contador">0 caracteres</small></label>
-              <textarea id="texto-claro" placeholder="Escreva ou cole aqui o texto que deseja proteger" spellcheck="true" autocomplete="off"></textarea>
+              <textarea id="texto-claro" placeholder="Escreva ou cole aqui o texto que deseja proteger" spellcheck="false" autocorrect="off" autocapitalize="off" autocomplete="off"></textarea>
             </div>
 
             <div class="dupla">
@@ -492,11 +494,11 @@ td code, p code, li code { font-family: var(--mono); font-size: .85em; backgroun
                     <span class="cartao"><b>AES-256-GCM</b><small>Recomendado. Cifra e autentica de uma vez; qualquer alteração no texto cifrado é detectada na abertura.</small></span>
                   </label>
                   <label class="escolha">
-                    <input type="radio" name="alg" value="2">
-                    <span class="cartao"><b>AES-256-CBC com HMAC-SHA-256</b><small>Modo clássico em blocos, com assinatura calculada à parte por uma segunda chave.</small></span>
+                    <input type="radio" name="alg" value="4">
+                    <span class="cartao"><b>AES-256-CBC com HMAC-SHA-256</b><small>Modo clássico em blocos, com assinatura calculada à parte por uma segunda chave, derivada por HKDF.</small></span>
                   </label>
                   <label class="escolha">
-                    <input type="radio" name="alg" value="3">
+                    <input type="radio" name="alg" value="5">
                     <span class="cartao"><b>AES-256-CTR com HMAC-SHA-256</b><small>Modo de contador, também assinado. O texto cifrado fica do mesmo tamanho do original.</small></span>
                   </label>
                 </fieldset>
@@ -541,7 +543,7 @@ td code, p code, li code { font-family: var(--mono); font-size: .85em; backgroun
                 </div>
               </div>
               <label class="oculto-visual" for="saida-cifra">Texto criptografado</label>
-              <textarea id="saida-cifra" class="cifra" readonly></textarea>
+              <textarea id="saida-cifra" class="cifra" readonly spellcheck="false" autocomplete="off"></textarea>
               <dl class="ficha" id="ficha-cifra"></dl>
               <div class="linha-botoes">
                 <button type="button" class="botao pequeno" id="copiar-cifra">
@@ -601,7 +603,7 @@ td code, p code, li code { font-family: var(--mono); font-size: .85em; backgroun
                 </div>
               </div>
               <label class="oculto-visual" for="saida-clara">Texto descriptografado</label>
-              <textarea id="saida-clara" readonly></textarea>
+              <textarea id="saida-clara" readonly spellcheck="false" autocorrect="off" autocapitalize="off" autocomplete="off"></textarea>
               <dl class="ficha" id="ficha-abrir"></dl>
               <div class="linha-botoes">
                 <button type="button" class="botao pequeno" id="copiar-claro">
@@ -609,6 +611,7 @@ td code, p code, li code { font-family: var(--mono); font-size: .85em; backgroun
                   Copiar texto
                 </button>
               </div>
+              <p class="dica">O texto aberto fica apenas nesta aba. Ao copiá-lo, ele passa para a área de transferência do sistema, que outros programas podem ler e que costuma guardar histórico.</p>
             </div>
 
             <div class="ferramentas">
@@ -757,6 +760,14 @@ td code, p code, li code { font-family: var(--mono); font-size: .85em; backgroun
       </details>
 
       <details class="duvida">
+        <summary>Se tudo roda aqui, em que ainda preciso confiar?</summary>
+        <div class="resposta">
+          <p>Na entrega do código, e só nela. A criptografia acontece no seu navegador, mas o arquivo que faz isso chega pela rede na primeira visita. Quem controlasse o servidor, o domínio ou o repositório poderia, em teoria, servir uma versão alterada.</p>
+          <p>Por isso o projeto é de código aberto e cabe em um arquivo só, que você pode ler por inteiro. Para uso mais exigente, baixe o <code>index.html</code> publicado em Releases no GitHub, confira o resumo SHA-256 divulgado junto e abra o arquivo direto do seu disco. Aí não há entrega nenhuma em que confiar.</p>
+        </div>
+      </details>
+
+      <details class="duvida">
         <summary>Funciona sem internet?</summary>
         <div class="resposta">
           <p>Sim. Na primeira visita o CriptSage se guarda no navegador e, a partir daí, abre mesmo sem conexão. Para deixá-lo à mão como um aplicativo, use "Instalar" ou "Adicionar à tela de início", no menu do navegador. Também dá para salvar a página no computador com Ctrl + S.</p>
@@ -798,7 +809,7 @@ td code, p code, li code { font-family: var(--mono); font-size: .85em; backgroun
 
 <footer class="rodape">
   <div class="interior">
-    <p class="assinatura">CriptSage V.1.0.0 &nbsp;|&nbsp; Desenvolvido por M. A. Klippel</p>
+    <p class="assinatura">CriptSage V.1.1.0 &nbsp;|&nbsp; Desenvolvido por M. A. Klippel</p>
     <p><a href="mailto:contato@klippelbit.app.br">contato@klippelbit.app.br</a></p>
   </div>
 </footer>
@@ -819,14 +830,41 @@ const CriptSage = (() => {
   const VERSION = 1;
   const SALT_LEN = 16;
   const FIXED_HEADER = 7 + SALT_LEN; // versão, alg, kdf, iterações(4), sal
-  const MIN_ITER = 10000;
+  const MIN_ITER = 100000;   // piso endurecido na v1.1.0
   const MAX_ITER = 10000000;
 
+  /* Suites de cifragem. 'hkdf' indica a derivação em dois estágios
+     (PBKDF2 para a chave mestra, HKDF para as subchaves). Os identificadores 2
+     e 3 pedem 512 bits diretos ao PBKDF2 e permanecem apenas para abrir
+     mensagens geradas antes da versão 1.1.0. */
   const ALGS = {
-    1: { name: 'AES-256-GCM', mode: 'AES-GCM', ivLen: 12, bits: 256, mac: false },
-    2: { name: 'AES-256-CBC + HMAC-SHA-256', mode: 'AES-CBC', ivLen: 16, bits: 512, mac: true },
-    3: { name: 'AES-256-CTR + HMAC-SHA-256', mode: 'AES-CTR', ivLen: 16, bits: 512, mac: true }
+    1: { name: 'AES-256-GCM', mode: 'AES-GCM', ivLen: 12, bits: 256, mac: false, hkdf: false },
+    2: { name: 'AES-256-CBC + HMAC-SHA-256 (formato antigo)', mode: 'AES-CBC', ivLen: 16, bits: 512, mac: true, hkdf: false, legado: true },
+    3: { name: 'AES-256-CTR + HMAC-SHA-256 (formato antigo)', mode: 'AES-CTR', ivLen: 16, bits: 512, mac: true, hkdf: false, legado: true },
+    4: { name: 'AES-256-CBC + HMAC-SHA-256', mode: 'AES-CBC', ivLen: 16, bits: 256, mac: true, hkdf: true },
+    5: { name: 'AES-256-CTR + HMAC-SHA-256', mode: 'AES-CTR', ivLen: 16, bits: 256, mac: true, hkdf: true }
   };
+
+  /* Quando o HKDF não existe no navegador, as suites novas caem para as antigas,
+     que usam somente o PBKDF2. Correção antes de otimização. */
+  const EQUIVALENTE_ANTIGO = { 4: 2, 5: 3 };
+  const HKDF_INFO_CIFRA = new TextEncoder().encode('CSG1-enc');
+  const HKDF_INFO_MAC = new TextEncoder().encode('CSG1-mac');
+  const HKDF_SEM_SAL = new Uint8Array(0);
+  let hkdfDisponivel = null;
+
+  async function temHkdf() {
+    if (hkdfDisponivel !== null) return hkdfDisponivel;
+    try {
+      const k = await crypto.subtle.importKey('raw', new Uint8Array(32), 'HKDF', false, ['deriveBits']);
+      await crypto.subtle.deriveBits(
+        { name: 'HKDF', hash: 'SHA-256', salt: HKDF_SEM_SAL, info: HKDF_INFO_CIFRA }, k, 256);
+      hkdfDisponivel = true;
+    } catch (e) {
+      hkdfDisponivel = false;
+    }
+    return hkdfDisponivel;
+  }
   const KDFS = {
     1: { name: 'PBKDF2-SHA-256', hash: 'SHA-256', base: 600000 },
     2: { name: 'PBKDF2-SHA-512', hash: 'SHA-512', base: 210000 }
@@ -870,26 +908,58 @@ const CriptSage = (() => {
     return { name: 'AES-CTR', counter: iv, length: 64 };
   }
 
+  /* Expande a chave mestra em uma subchave de 256 bits, com separação de
+     domínio pelo rótulo 'info'. */
+  async function expandir(mestra, info) {
+    const k = await crypto.subtle.importKey('raw', mestra, 'HKDF', false, ['deriveBits']);
+    return new Uint8Array(await crypto.subtle.deriveBits(
+      { name: 'HKDF', hash: 'SHA-256', salt: HKDF_SEM_SAL, info }, k, 256));
+  }
+
   async function deriveKeys(password, salt, kdfId, iterations, algId) {
     const alg = ALGS[algId], kdf = KDFS[kdfId];
     const passBytes = te.encode(password.normalize('NFC'));
     const base = await crypto.subtle.importKey('raw', passBytes, 'PBKDF2', false, ['deriveBits']);
     passBytes.fill(0);
-    const bits = new Uint8Array(await crypto.subtle.deriveBits(
+
+    /* O PBKDF2 produz 256 bits nas suites com HKDF, e não 512. Pedir 512 bits a
+       um PBKDF2 sobre SHA-256 custaria dois blocos ao usuário legítimo sem
+       custar o segundo a quem tenta adivinhar a palavra-passe, que só precisa
+       do primeiro para testar um candidato. */
+    const mestra = new Uint8Array(await crypto.subtle.deriveBits(
       { name: 'PBKDF2', salt, iterations, hash: kdf.hash }, base, alg.bits));
-    const encKey = await crypto.subtle.importKey('raw', bits.slice(0, 32), { name: alg.mode }, false, ['encrypt', 'decrypt']);
+
+    let bitsCifra, bitsMac = null;
+    if (alg.hkdf) {
+      bitsCifra = await expandir(mestra, HKDF_INFO_CIFRA);
+      if (alg.mac) bitsMac = await expandir(mestra, HKDF_INFO_MAC);
+    } else {
+      bitsCifra = mestra.slice(0, 32);
+      if (alg.mac) bitsMac = mestra.slice(32, 64);
+    }
+
+    const encKey = await crypto.subtle.importKey('raw', bitsCifra, { name: alg.mode }, false, ['encrypt', 'decrypt']);
     let macKey = null;
     if (alg.mac) {
-      macKey = await crypto.subtle.importKey('raw', bits.slice(32, 64), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
+      macKey = await crypto.subtle.importKey('raw', bitsMac, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
     }
-    bits.fill(0);
+    mestra.fill(0);
+    bitsCifra.fill(0);
+    if (bitsMac) bitsMac.fill(0);
     return { encKey, macKey };
   }
 
   async function encrypt(plaintext, password, opts) {
-    const algId = Number(opts.alg), kdfId = Number(opts.kdf);
+    let algId = Number(opts.alg);
+    const kdfId = Number(opts.kdf);
+    if (ALGS[algId] && ALGS[algId].hkdf && !(await temHkdf())) {
+      algId = EQUIVALENTE_ANTIGO[algId];
+    }
     const alg = ALGS[algId], kdf = KDFS[kdfId];
     if (!alg || !kdf) throw new Error('Opção de criptografia desconhecida.');
+    if (alg.legado && !EQUIVALENTE_ANTIGO[Number(opts.alg)]) {
+      throw new Error('Esta suite só é aceita para abrir mensagens antigas.');
+    }
     const iterations = kdf.base * Number(opts.cost || 1);
 
     const salt = crypto.getRandomValues(new Uint8Array(SALT_LEN));
@@ -971,7 +1041,7 @@ const CriptSage = (() => {
     }
   }
 
-  return { encrypt, decrypt, inspect, ALGS, KDFS, FormatError, AuthError, PREFIX };
+  return { encrypt, decrypt, inspect, temHkdf, ALGS, KDFS, FormatError, AuthError, PREFIX };
 })();
 
 /* ===================================================================
