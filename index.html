@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#fdf5e6">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-8XG01PBanE8ZeM1SlhW5FBL8dMVPVjNBXvK+LbmBL7Y='; style-src 'sha256-s+NUBnOujiRO2BIug31QuX23RM4lEih0r6Gk5k0SwR0=' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; manifest-src 'self'; worker-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-6pyzCMDoFTNSvslYSqFbHmzi3C02TE3ZWfqWifmVe9M='; style-src 'sha256-s+NUBnOujiRO2BIug31QuX23RM4lEih0r6Gk5k0SwR0=' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; manifest-src 'self'; worker-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'">
 <meta name="color-scheme" content="light">
 <title>CriptSage — criptografia de textos</title>
 <meta name="description" content="O CriptSage cifra textos no próprio navegador com AES-256 e PBKDF2. Nada é enviado para a internet, e só quem souber a palavra-passe consegue ler.">
@@ -763,7 +763,8 @@ td code, p code, li code { font-family: var(--mono); font-size: .85em; backgroun
         <summary>Se tudo roda aqui, em que ainda preciso confiar?</summary>
         <div class="resposta">
           <p>Na entrega do código, e só nela. A criptografia acontece no seu navegador, mas o arquivo que faz isso chega pela rede na primeira visita. Quem controlasse o servidor, o domínio ou o repositório poderia, em teoria, servir uma versão alterada.</p>
-          <p>Por isso o projeto é de código aberto e cabe em um arquivo só, que você pode ler por inteiro. Para uso mais exigente, baixe o <code>index.html</code> publicado em Releases no GitHub, confira o resumo SHA-256 divulgado junto e abra o arquivo direto do seu disco. Aí não há entrega nenhuma em que confiar.</p>
+          <p>Por isso o <a href="https://github.com/miqueiasklippel/criptsage" target="_blank" rel="noopener noreferrer">projeto é de código aberto</a> e cabe em um arquivo só, que você pode ler por inteiro.</p>
+          <p>Para uso mais exigente, baixe o <code>index.html</code> publicado em <a href="https://github.com/miqueiasklippel/criptsage/releases/latest" target="_blank" rel="noopener noreferrer">Versões</a>, confira o resumo com <code>sha256sum index.html</code> contra o valor divulgado junto e abra o arquivo direto do seu disco. Aí não há entrega nenhuma em que confiar.</p>
         </div>
       </details>
 
@@ -809,8 +810,14 @@ td code, p code, li code { font-family: var(--mono); font-size: .85em; backgroun
 
 <footer class="rodape">
   <div class="interior">
-    <p class="assinatura">CriptSage V.1.1.0 &nbsp;|&nbsp; Desenvolvido por M. A. Klippel</p>
-    <p><a href="mailto:contato@klippelbit.app.br">contato@klippelbit.app.br</a></p>
+    <p class="assinatura">CriptSage <a href="https://github.com/miqueiasklippel/criptsage/releases/latest" target="_blank" rel="noopener noreferrer">V.1.1.1</a> &nbsp;|&nbsp; Desenvolvido por M. A. Klippel</p>
+    <p>
+      <a href="https://github.com/miqueiasklippel/criptsage" target="_blank" rel="noopener noreferrer">Código no GitHub</a>
+      &nbsp;·&nbsp;
+      <a href="https://github.com/miqueiasklippel/criptsage/releases" target="_blank" rel="noopener noreferrer">Versões</a>
+      &nbsp;·&nbsp;
+      <a href="mailto:contato@klippelbit.app.br">contato@klippelbit.app.br</a>
+    </p>
   </div>
 </footer>
 
@@ -1426,18 +1433,33 @@ const CriptSage = (() => {
 
   /* ---------- uso offline: service worker ---------- */
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    const avisar = () => $('aviso-versao').classList.add('visivel');
+
+    /* Se já havia um service worker no comando quando a página abriu, qualquer
+       troca de comando significa que uma versão nova assumiu e que o conteúdo
+       exibido ficou velho. Na primeira visita não há aviso, porque não há o que
+       atualizar. */
+    const jaControlada = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (jaControlada) avisar();
+    });
+
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js').then((reg) => {
-        // uma versão nova ficou pronta enquanto a página estava aberta
-        reg.addEventListener('updatefound', () => {
-          const novo = reg.installing;
-          if (!novo) return;
-          novo.addEventListener('statechange', () => {
-            if (novo.state === 'installed' && navigator.serviceWorker.controller) {
-              $('aviso-versao').classList.add('visivel');
-            }
-          });
-        });
+        /* O evento updatefound pode disparar antes de register() resolver, e aí
+           um ouvinte registrado só agora o perderia. Por isso o estado atual da
+           instalação também é consultado, além do evento. */
+        const observar = (trabalhador) => {
+          if (!trabalhador) return;
+          const conferir = () => {
+            if (trabalhador.state === 'installed' && navigator.serviceWorker.controller) avisar();
+          };
+          conferir();
+          trabalhador.addEventListener('statechange', conferir);
+        };
+        observar(reg.installing);
+        observar(reg.waiting);
+        reg.addEventListener('updatefound', () => observar(reg.installing));
       }).catch(() => { /* sem service worker a página continua funcionando */ });
     });
 

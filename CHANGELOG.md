@@ -3,6 +3,21 @@
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/), e as
 versões obedecem ao [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [1.1.1] - 2026-11-21
+
+### Adicionado
+
+- Links para o repositório e para a página de versões no rodapé do site, e na dúvida sobre
+  o modelo de confiança, que até aqui mandava o leitor procurar o arquivo em Releases sem
+  oferecer o caminho.
+
+### Corrigido
+
+- O aviso de versão nova podia não aparecer. O ouvinte do evento `updatefound` era
+  registrado depois que `register()` resolvia, e o evento pode disparar antes disso. Agora
+  o estado da instalação também é consultado diretamente, e a troca de comando do service
+  worker serve como sinal adicional.
+
 ## [1.1.0] - 2026-11-21
 
 Versão de endurecimento, resultante de uma auditoria técnica externa do projeto.
@@ -74,5 +89,6 @@ Primeira versão pública.
 - Suíte de 48 testes do núcleo criptográfico, extraído do próprio `index.html`.
 - Publicação automática no GitHub Pages.
 
+[1.1.1]: https://github.com/miqueiasklippel/criptsage/releases/tag/v1.1.1
 [1.1.0]: https://github.com/miqueiasklippel/criptsage/releases/tag/v1.1.0
 [1.0.0]: https://github.com/miqueiasklippel/criptsage/releases/tag/v1.0.0
