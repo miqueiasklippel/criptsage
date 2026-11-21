@@ -69,7 +69,8 @@ jobs:
           cat > corpo.md <<CORPO
           ## CriptSage $ETIQUETA
 
-          O histórico completo das mudanças está no [CHANGELOG](CHANGELOG.md).
+          O histórico completo das mudanças está no
+          [CHANGELOG](https://github.com/miqueiasklippel/criptsage/blob/main/CHANGELOG.md).
 
           ### Uso offline verificável
 
